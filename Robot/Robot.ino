@@ -35,7 +35,7 @@ void setup(){
 }
 
 void loop(){
-
+  driveForward();
   //als hij 20cm van de muur af is
   if(getDistance() <= '20'){
     //stop met rijden voor 2 sec

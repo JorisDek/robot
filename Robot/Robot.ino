@@ -31,6 +31,8 @@ float rDistance; //afstand rechts
 
 int pos = 90;
 
+int modus;
+
 /////////SETUP/////////
 void setup(){
   pinMode(echoPin, INPUT);
@@ -51,72 +53,145 @@ void setup(){
 }
 ////LOOP/////////
 void loop(){
-  int readSerial = Serial.read();
-  Serial.println(readSerial);
-  if(readSerial == 49){
-    stopDriving();
-    kijken();
-    fDistance = distance;  
-    Serial.println(distance);
-    //als hij 20cm van de muur af is
-    if(fDistance < 20){
-      Serial.println("Ik ga om me heen kijken ");
-      //stop met rijden voor 2 sec
+  while(Serial.available()) {
+    int readSerial = Serial.read() - '0';
+    if(readSerial == 1){
+      modus = 1;
+    } else if(readSerial == 2){
+      modus = 2;
+    } else if (readSerial == 3){
+      modus = 3;
+    } else if(readSerial == 0){
+      modus = 0;
+    }
+    Serial.print("Modus ");
+    Serial.println(modus);
+  }
+    ////MODUS 1/////
+    if(modus == 1){
+      Serial.println("Zelfdenk modus!");
       stopDriving();
-      delay(500);
-      //draai naar links voor 1 sec
-      turnLeft();
-      delay(1000);
-      stopDriving();
-      //doe meting 1
       kijken();
-      lDistance = distance;
-      Serial.print("lDistance = ");
-      Serial.println(lDistance);
-      
-      //draai nnar recht voor 2 sec
-      turnRight();
-      delay(2000);
-      stopDriving();
-      //doe meting 2
-      kijken();
-      rDistance = distance; 
-      Serial.print("rDistance = ");
-      Serial.println(rDistance);   
-      
-      delay(500);
-      //als meting 1 en 2 kleiner zijn dan 30cm draai 180 graden linksom
-      if(lDistance <= 30 && rDistance <= 30){
-        Serial.println("Ik ga omdraaien!");
+      fDistance = distance;  
+      Serial.println(distance);
+      //als hij 20cm van de muur af is
+      if(fDistance < 20){
+        Serial.println("Ik ga om me heen kijken ");
+        //stop met rijden voor 2 sec
+        stopDriving();
+        delay(500);
+        //draai naar links voor 1 sec
         turnLeft();
-        delay(3000);
-      }
-      //als meting 1 kleiner is dan meting 2 ga rechtdoor
-      if(lDistance < rDistance){
-        Serial.println("Ik ga rechts!");
-        driveForward();
-      //als meting 2 kleiner is dan meting 1 draai weer terug naar links voor 2 sec en ga rechtdoor
-      } else if(rDistance < lDistance){
-        Serial.println("Ik ga links!");
-        turnLeft();
+        delay(1000);
+        stopDriving();
+        //doe meting 1
+        kijken();
+        lDistance = distance;
+        Serial.print("lDistance = ");
+        Serial.println(lDistance);
+        
+        //draai nnar recht voor 2 sec
+        turnRight();
         delay(2000);
+        stopDriving();
+        //doe meting 2
+        kijken();
+        rDistance = distance; 
+        Serial.print("rDistance = ");
+        Serial.println(rDistance);   
+        
+        delay(500);
+        //als meting 1 en 2 kleiner zijn dan 30cm draai 180 graden linksom
+        if(lDistance <= 30 && rDistance <= 30){
+          Serial.println("Ik ga omdraaien!");
+          turnLeft();
+          delay(3000);
+        }
+        //als meting 1 kleiner is dan meting 2 ga rechtdoor
+        if(lDistance < rDistance){
+          Serial.println("Ik ga rechts!");
+          driveForward();
+        //als meting 2 kleiner is dan meting 1 draai weer terug naar links voor 2 sec en ga rechtdoor
+        } else if(rDistance < lDistance){
+          Serial.println("Ik ga links!");
+          turnLeft();
+          delay(2000);
+          driveForward();
+        }
+        //als de afstand tussen 20 en 40cm in zit
+      } else {
+        Serial.println("Ik zie niks!");
         driveForward();
+      } 
+      ///////MODUS 2///////
+    } else if(modus == 2){
+      //hier komt de code voor bestuurbaar maken via de Serial. Bluetooth of met kabel.
+      Serial.print("Remote modus!");
+      Serial.println(",");
+      stopDriving();
+      while(Serial.available() > 0){
+        char readDirection = Serial.read();
+        
+        if(readDirection == 'w'){
+          Serial.println("RC: Vooruit");
+          driveForward();
+          delay(100);
+          while (Serial.available() == 0);
+        }
+        if(readDirection == 's'){
+          Serial.println("RC: Achteruit");
+          driveBackward();
+          delay(100);
+          while (Serial.available() == 0);
+        }
+        if(readDirection == 'a'){
+          Serial.println("RC: Stuur links");
+          stuurLinks();
+          while (Serial.available() == 0);
+        }
+        if(readDirection == 'd'){
+          Serial.println("RC: Stuur rechts");
+          stuurRechts();
+          while (Serial.available() == 0);
+        }
+        if(readDirection == 'q'){
+          Serial.println("RC: Turn links"); 
+          turnLeft();
+          delay(100);
+          while (Serial.available() == 0);
+        }
+        if(readDirection == 'e'){
+          Serial.println("RC: Turn Rechts");
+          turnRight();
+          delay(100);
+          while (Serial.available() == 0);
+        }
+        if(readDirection == 'r'){
+          Serial.println("RC: Stuur rechtdoor");
+          stuurRechtdoor();
+          while (Serial.available() == 0);
+        }
+        if(readDirection == 'f'){
+          Serial.println("RC: Stop");
+          stopDriving();
+          delay(100);
+          while (Serial.available() == 0);
+        }
+        
+        if(readDirection == '0') {
+          modus = 0;
+        }
       }
-      //als de afstand tussen 20 en 40cm in zit
-    } else {
-      Serial.println("Ik zie niks!");
-      driveForward();
-    } 
-  } else if(readSerial == 50){
-    //hier komt de code voor bestuurbaar maken via de Serial. Bluetooth of met kabel.
-    stopDriving();
-  } else if(readSerial == 51){
-    // hier de code voor IR remote besturing
-    stopDriving();
-  } else if(readSerial == 48){
-    //stop alles
-    stopDriving();
-  }  
+      ///////MODUS 3///////
+    } else if(modus == 3){
+      // hier de code voor IR remote besturing
+      stopDriving();
+      ///////MODUS 0///////
+    } else if(modus == 0){
+      //stop alles
+      stopDriving();
+    }  
+  
 }
 ////////////////EINDE LOOP/////////////
 ///////////////FUNCTIES////////////////
@@ -271,8 +346,6 @@ void turnLeft(){
   digitalWrite(Motor2Pin1, LOW);
   digitalWrite(Motor4Pin2, HIGH);
   digitalWrite(Motor4Pin1, LOW);
-  Serial.println("Turn Left");
-  
 }
 void turnRight(){
   stuurRechtdoor();
@@ -285,27 +358,23 @@ void turnRight(){
   digitalWrite(Motor2Pin2, LOW);
   digitalWrite(Motor4Pin1, HIGH);
   digitalWrite(Motor4Pin2, LOW);
-  Serial.println("Turn Right");
-  
 }
 
-void stuurRechts(){
+void stuurLinks(){
   int _pos = getPos();
   
   for(pos = _pos; pos <= 140; pos = pos + stuursnelheid){
     stuur.write(pos);
     setPos(pos);
-    Serial.print("Rechts: "+ pos);
     delay(15);
   }
 }
 
-void stuurLinks(){
+void stuurRechts(){
   int _pos = getPos();
   for(pos = _pos; pos >= 40; pos = pos - stuursnelheid){
     stuur.write(pos);
     setPos(pos);
-    Serial.print("Links: "+ pos);
     delay(15);
   }
 }

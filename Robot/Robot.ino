@@ -66,11 +66,13 @@ void loop(){
     }
     Serial.print("Modus ");
     Serial.println(modus);
+    
   }
     ////MODUS 1/////
     if(modus == 1){
       Serial.println("Zelfdenk modus!");
       stopDriving();
+      driveForward();
       kijken();
       fDistance = distance;  
       Serial.println(distance);
@@ -126,59 +128,65 @@ void loop(){
       ///////MODUS 2///////
     } else if(modus == 2){
       //hier komt de code voor bestuurbaar maken via de Serial. Bluetooth of met kabel.
-      Serial.print("Remote modus!");
-      Serial.println(",");
       stopDriving();
+      
       while(Serial.available() > 0){
-        char readDirection = Serial.read();
         
-        if(readDirection == 'w'){
+        int readDirection = Serial.read() - '0';
+        //char readDirectionChar = char(readDirection);
+        int realDirection = readDirection + 48;
+        //Serial.print("realDirection = ");
+        //Serial.println(realDirection);
+        
+        
+        if(realDirection == 'W'){
           Serial.println("RC: Vooruit");
           driveForward();
           delay(100);
           while (Serial.available() == 0);
+          
         }
-        if(readDirection == 's'){
+        if(realDirection == 'S'){
           Serial.println("RC: Achteruit");
           driveBackward();
-          delay(100);
+          delay(100); 
           while (Serial.available() == 0);
+          
         }
-        if(readDirection == 'a'){
-          Serial.println("RC: Stuur links");
-          stuurLinks();
-          while (Serial.available() == 0);
-        }
-        if(readDirection == 'd'){
-          Serial.println("RC: Stuur rechts");
-          stuurRechts();
-          while (Serial.available() == 0);
-        }
-        if(readDirection == 'q'){
+        
+        if(realDirection == 'A'){
           Serial.println("RC: Turn links"); 
           turnLeft();
           delay(100);
+          
           while (Serial.available() == 0);
         }
-        if(readDirection == 'e'){
+        if(realDirection == 'D'){
           Serial.println("RC: Turn Rechts");
           turnRight();
-          delay(100);
+          delay(100); 
           while (Serial.available() == 0);
         }
-        if(readDirection == 'r'){
+        if(realDirection == 'R'){
           Serial.println("RC: Stuur rechtdoor");
           stuurRechtdoor();
           while (Serial.available() == 0);
         }
-        if(readDirection == 'f'){
+        if(realDirection == 'F'){
           Serial.println("RC: Stop");
           stopDriving();
           delay(100);
           while (Serial.available() == 0);
         }
+        if (realDirection >= 140 && realDirection <= 240){
+          realDirection = realDirection - 100;
+          Serial.print("RC stuur pos: ");
+          Serial.println(realDirection);
+          stuur.write(realDirection);          
+          while (Serial.available() == 0);
+        }
         
-        if(readDirection == '0') {
+        if(realDirection == '0') {
           modus = 0;
         }
       }
@@ -395,7 +403,7 @@ void stuurRechtdoor(){
   }
 }
 
-float kijken(){
+void kijken(){
   
   int duration;
   duration = ogen.ping();
